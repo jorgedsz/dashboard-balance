@@ -28,7 +28,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 @keyframes fi{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .pg-title{font-size:22px;font-weight:500;letter-spacing:-0.03em;margin-bottom:4px;}
 .pg-sub{font-size:13px;color:var(--mu);margin-bottom:28px;}
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
 .tdate{font-size:12px;color:var(--mu);font-family:'DM Mono',monospace;}
 .sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
 .sc{background:var(--surf);border:1px solid var(--bd);border-radius:var(--r);padding:18px 20px;}
@@ -40,7 +40,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .cc{background:var(--surf);border:1px solid var(--bd);border-radius:var(--r);padding:20px;}
 .ct{font-size:12px;color:var(--mu);letter-spacing:0.06em;margin-bottom:16px;}
 .cw{position:relative;height:200px;}
-.dw{display:flex;align-items:center;gap:20px;height:200px;}
+.dw{display:flex;align-items:center;gap:20px;height:200px;flex-wrap:wrap;}
 .leg{flex:1;}.lr{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;}
 .ld{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .ln{flex:1;color:var(--mu2);}.lp{font-family:'DM Mono',monospace;font-size:12px;color:var(--tx);}
@@ -74,6 +74,15 @@ tbody tr:hover{background:var(--surf2);}
 .bcard:hover{border-color:var(--bd2);}
 .bcard.overdue{border-color:rgba(239,68,68,0.35);}
 .bcard.soon{border-color:rgba(245,158,11,0.35);}
+.bcard.paid{border-color:rgba(34,197,94,0.35);background:linear-gradient(180deg,rgba(34,197,94,0.04),var(--surf));}
+.ibtn.ipay{color:var(--gr);border-color:rgba(34,197,94,0.3);}
+.ibtn.ipay:hover{background:var(--grb);border-color:var(--gr);color:var(--gr);}
+.ibtn.ipaid{color:var(--gr);background:var(--grb);border-color:rgba(34,197,94,0.4);cursor:default;opacity:0.75;}
+.ibtn.ipaid:hover{background:var(--grb);color:var(--gr);}
+.bal-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:14px 16px;margin-bottom:18px;}
+.bal-lbl{font-size:11px;color:var(--mu);letter-spacing:0.06em;}
+.bal-val{font-size:14px;font-weight:500;margin-top:4px;}
+.bal-amt{font-size:18px;font-weight:500;font-family:'DM Mono',monospace;color:var(--re);margin-top:4px;}
 .bsr{display:flex;align-items:center;justify-content:space-between;}
 .sdot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:6px;flex-shrink:0;}
 .fcr{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
@@ -100,7 +109,7 @@ tbody tr:hover{background:var(--surf2);}
 .btn-p:hover{opacity:0.88;}
 .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center;}
 .ov.on{display:flex;}
-.modal{background:var(--surf);border:1px solid var(--bd2);border-radius:16px;padding:28px;width:380px;animation:fi 0.18s ease;}
+.modal{background:var(--surf);border:1px solid var(--bd2);border-radius:16px;padding:28px;width:min(380px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow-y:auto;animation:fi 0.18s ease;}
 .mt{font-size:16px;font-weight:500;margin-bottom:20px;}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .fg{margin-bottom:14px;}
@@ -118,7 +127,19 @@ tbody tr:hover{background:var(--surf2);}
   .sg{grid-template-columns:1fr 1fr;}.cr,.fcr{grid-template-columns:1fr;}
   .nav-item{justify-content:center;padding:10px;}.nav-item svg{width:18px;height:18px;}
 }
-@media(max-width:600px){.sg{grid-template-columns:1fr;}.main{padding:20px 16px;}.fr{grid-template-columns:1fr;}}
+@media(max-width:600px){
+  .sg{grid-template-columns:1fr;}.main{padding:20px 16px;max-width:100%;}.fr{grid-template-columns:1fr;}
+  thead th,tbody td{padding:10px 12px;font-size:12px;}
+  .pcard,.bcard,.sc{padding:16px;}
+  .pg-title{font-size:20px;}
+  .modal{padding:22px;}
+  .dw{height:auto;flex-direction:column;align-items:stretch;}
+  .dw canvas{margin:0 auto;}
+}
+@media(max-width:380px){
+  .pgrid,.bgrid{grid-template-columns:1fr;}
+  thead th,tbody td{padding:8px 10px;}
+}
 </style>
 </head>
 <body>
@@ -238,6 +259,25 @@ tbody tr:hover{background:var(--surf2);}
   </div>
 </div>
 
+<!-- PAY BILL MODAL -->
+<div class="ov" id="ovPay">
+  <div class="modal">
+    <div class="mt">Pay bill</div>
+    <div class="bal-row">
+      <div><div class="bal-lbl">BILL</div><div class="bal-val" id="payBillName"></div></div>
+      <div style="text-align:right"><div class="bal-lbl">AMOUNT</div><div class="bal-amt" id="payAmount"></div></div>
+    </div>
+    <div class="fg">
+      <label class="fl">DEBIT FROM PLATFORM</label>
+      <select class="fi" id="payPlatform" onchange="updatePayPreview()"></select>
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <div id="payPreview" style="font-size:12px;color:var(--mu)"></div>
+    </div>
+    <div class="ma"><button class="btn-g" onclick="closeOv('ovPay')">Cancel</button><button class="btn-p" id="payConfirmBtn" onclick="confirmPay()">Confirm payment</button></div>
+  </div>
+</div>
+
 <!-- BILL MODAL -->
 <div class="ov" id="ovBl">
   <div class="modal">
@@ -297,8 +337,30 @@ var txs=[
   {id:8,type:'expense',name:'Restaurante',cat:'Alimentacion',amt:85,date:ds(14,CM,CY),note:''}
 ];
 
-var ptEdit=0, blEdit=0, txEdit=0, txType='income', txFilter='all';
+var ptEdit=0, blEdit=0, txEdit=0, txType='income', txFilter='all', payBillId=0;
 var cLine=null,cDonut=null,cFlow=null,cExp=null;
+
+function persist(){
+  try{
+    localStorage.setItem('bd_platforms',JSON.stringify(platforms));
+    localStorage.setItem('bd_bills',JSON.stringify(bills));
+    localStorage.setItem('bd_txs',JSON.stringify(txs));
+  }catch(e){}
+}
+function loadPersisted(){
+  try{
+    var p=localStorage.getItem('bd_platforms');if(p)platforms=JSON.parse(p);
+    var b=localStorage.getItem('bd_bills');if(b)bills=JSON.parse(b);
+    var t=localStorage.getItem('bd_txs');if(t)txs=JSON.parse(t);
+  }catch(e){}
+}
+loadPersisted();
+
+function isPaidThisMonth(b){
+  if(!b||!b.lastPaid)return false;
+  var d=new Date(b.lastPaid+'T00:00:00');
+  return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+}
 
 function fmtD(n){return '$'+Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
 function fmtS(n){return '$'+Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');}
@@ -322,7 +384,7 @@ function nav(id){
 
 function closeOv(id){document.getElementById(id).classList.remove('on');}
 document.querySelectorAll('.ov').forEach(function(o){o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('on');});});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){['ovTx','ovPt','ovBl'].forEach(function(id){document.getElementById(id).classList.remove('on');});}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){['ovTx','ovPt','ovBl','ovPay'].forEach(function(id){document.getElementById(id).classList.remove('on');});}});
 
 // ---- OVERVIEW ----
 function renderOv(){
@@ -507,7 +569,7 @@ function openTx(id){
 function delTx(id){
   if(!confirm('Eliminar transaccion?'))return;
   txs=txs.filter(function(t){return t.id!==id;});
-  renderCf();
+  persist();renderCf();
 }
 
 function saveTx(){
@@ -523,7 +585,7 @@ function saveTx(){
   } else {
     txs.push({id:Date.now(),type:txType,name:name,amt:amt,date:date,cat:cat,note:note});
   }
-  closeOv('ovTx');renderCf();
+  persist();closeOv('ovTx');renderCf();
 }
 
 // ---- AMOUNTS ----
@@ -601,7 +663,7 @@ function openPt(id){
 function delPt(id){
   if(!confirm('Remove platform?'))return;
   platforms=platforms.filter(function(p){return p.id!==id;});
-  renderPt();
+  persist();renderPt();
 }
 
 function savePt(){
@@ -616,12 +678,13 @@ function savePt(){
   } else {
     platforms.push({id:Date.now(),name:name,type:type,inv:inv,bal:bal});
   }
-  closeOv('ovPt');renderPt();
+  persist();closeOv('ovPt');renderPt();
 }
 
 // ---- BILLS ----
-function bstatus(due){
-  var td=now.getDate(),diff=due-td;
+function bstatus(b){
+  if(isPaidThisMonth(b))return{lbl:'Paid this month',cls:'pos',dot:'#22c55e',card:'paid'};
+  var td=now.getDate(),diff=b.due-td;
   if(diff<0)return{lbl:'Overdue',cls:'neg',dot:'#ef4444',card:'overdue'};
   if(diff<=5)return{lbl:'Due in '+diff+'d',cls:'warn',dot:'#f59e0b',card:'soon'};
   return{lbl:'Due in '+diff+'d',cls:'pos',dot:'#22c55e',card:''};
@@ -630,8 +693,8 @@ function bstatus(due){
 function renderBl(){
   var mon=bills.filter(function(b){return b.freq==='Monthly';}).reduce(function(s,b){return s+b.amt;},0);
   var tod=now.getDate();
-  var ov=bills.filter(function(b){return b.due<tod;}).length;
-  var sn=bills.filter(function(b){var d=b.due-tod;return d>=0&&d<=5;}).length;
+  var ov=bills.filter(function(b){return !isPaidThisMonth(b)&&b.due<tod;}).length;
+  var sn=bills.filter(function(b){var d=b.due-tod;return !isPaidThisMonth(b)&&d>=0&&d<=5;}).length;
   document.getElementById('bl-sg').innerHTML=
     '<div class="sc"><div class="sl">TOTAL/MONTH</div><div class="sv neg">'+fmtD(mon)+'</div></div>'+
     '<div class="sc"><div class="sl">ACTIVE BILLS</div><div class="sv">'+bills.length+'</div></div>'+
@@ -639,17 +702,26 @@ function renderBl(){
     '<div class="sc"><div class="sl">OVERDUE</div><div class="sv '+(ov>0?'neg':'pos')+'">'+ov+'</div></div>';
   var grid=document.getElementById('blGrid');
   if(!bills.length){grid.innerHTML='<div class="empty"><div class="ei">O</div>No bills yet.</div>';return;}
-  var sorted=bills.slice().sort(function(a,b){return a.due-b.due;});
+  var sorted=bills.slice().sort(function(a,b){
+    var pa=isPaidThisMonth(a)?1:0,pb=isPaidThisMonth(b)?1:0;
+    if(pa!==pb)return pa-pb;
+    return a.due-b.due;
+  });
   grid.innerHTML=sorted.map(function(b){
-    var st=bstatus(b.due);
+    var st=bstatus(b);
     var bg=BTBG[b.cat]||BTBG.Other;
+    var paid=isPaidThisMonth(b);
+    var payBtn=paid
+      ? '<button class="ibtn ipaid" disabled title="Paid this month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></button>'
+      : '<button class="ibtn ipay" onclick="openPay('+b.id+')" title="Mark as paid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></button>';
     return '<div class="bcard '+st.card+'">'+
       '<div class="ptop">'+
         '<div class="pico" style="background:'+bg+'">'+BTICO[b.cat]+'</div>'+
         '<div class="pinf"><div class="pnam">'+b.name+'</div><div class="ptyp">'+b.cat+' / '+b.freq+'</div></div>'+
         '<div class="pact">'+
-          '<button class="ibtn" onclick="openBill('+b.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'+
-          '<button class="ibtn" onclick="delBl('+b.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'+
+          payBtn+
+          '<button class="ibtn" onclick="openBill('+b.id+')" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'+
+          '<button class="ibtn" onclick="delBl('+b.id+')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'+
         '</div></div>'+
       '<div class="pmid">'+
         '<div><div class="pbl">AMOUNT</div><div class="pbv">'+fmtD(b.amt)+'</div></div>'+
@@ -660,6 +732,57 @@ function renderBl(){
         '<span style="display:flex;align-items:center;font-size:12px" class="'+st.cls+'"><span class="sdot" style="background:'+st.dot+'"></span>'+st.lbl+'</span>'+
       '</div></div>';
   }).join('');
+}
+
+function openPay(id){
+  payBillId=id;
+  var b=bills.filter(function(x){return x.id===id;})[0];
+  if(!b)return;
+  document.getElementById('payBillName').textContent=b.name;
+  document.getElementById('payAmount').textContent=fmtD(b.amt);
+  var sel=document.getElementById('payPlatform');
+  if(!platforms.length){
+    sel.innerHTML='<option value="">No platforms — add one first</option>';
+  } else {
+    sel.innerHTML=platforms.map(function(p){
+      return '<option value="'+p.id+'">'+p.name+' — '+fmtD(p.bal)+'</option>';
+    }).join('');
+  }
+  updatePayPreview();
+  document.getElementById('ovPay').classList.add('on');
+}
+
+function updatePayPreview(){
+  var b=bills.filter(function(x){return x.id===payBillId;})[0];
+  var prev=document.getElementById('payPreview');
+  var btn=document.getElementById('payConfirmBtn');
+  if(!b){prev.textContent='';return;}
+  if(!platforms.length){prev.innerHTML='<span class="neg">Add a platform before paying.</span>';btn.disabled=true;btn.style.opacity='0.5';return;}
+  var pid=parseInt(document.getElementById('payPlatform').value)||0;
+  var p=platforms.filter(function(x){return x.id===pid;})[0];
+  if(!p){prev.textContent='Select a platform.';return;}
+  var after=p.bal-b.amt;
+  var ok=after>=0;
+  prev.innerHTML='New '+p.name+' balance: <span class="'+(ok?'pos':'neg')+'">'+fmtD(after)+'</span>'+(ok?'':' <span class="neg">(insufficient funds)</span>');
+  btn.disabled=false;btn.style.opacity='1';
+}
+
+function confirmPay(){
+  var b=bills.filter(function(x){return x.id===payBillId;})[0];
+  if(!b)return;
+  if(!platforms.length){alert('Add a platform first.');return;}
+  var pid=parseInt(document.getElementById('payPlatform').value)||0;
+  var p=platforms.filter(function(x){return x.id===pid;})[0];
+  if(!p){alert('Select a platform.');return;}
+  if(p.bal<b.amt){
+    if(!confirm('Insufficient funds in '+p.name+'. Pay anyway and let balance go negative?'))return;
+  }
+  p.bal=Math.round((p.bal-b.amt)*100)/100;
+  b.lastPaid=ds(now.getDate(),now.getMonth(),now.getFullYear());
+  b.lastPaidPlatform=p.name;
+  persist();
+  closeOv('ovPay');
+  renderBl();
 }
 
 function openBill(id){
@@ -687,7 +810,7 @@ function openBill(id){
 function delBl(id){
   if(!confirm('Remove bill?'))return;
   bills=bills.filter(function(b){return b.id!==id;});
-  renderBl();
+  persist();renderBl();
 }
 
 function saveBl(){
@@ -703,7 +826,7 @@ function saveBl(){
   } else {
     bills.push({id:Date.now(),name:name,cat:cat,freq:freq,amt:amt,due:due});
   }
-  closeOv('ovBl');renderBl();
+  persist();closeOv('ovBl');renderBl();
 }
 
 renderOv();
