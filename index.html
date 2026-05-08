@@ -251,7 +251,7 @@ tbody tr:hover{background:var(--surf2);}
       <div class="fg"><label class="fl">FECHA</label><input class="fi" id="txDate" type="date"/></div>
     </div>
     <div class="fr">
-      <div class="fg"><label class="fl">CATEGORIA</label><select class="fi" id="txCat"></select></div>
+      <div class="fg"><label class="fl" id="txCatLbl">CATEGORIA</label><select class="fi" id="txCat"></select></div>
       <div class="fg"><label class="fl">NOTA</label><input class="fi" id="txNote" placeholder="Opcional"/></div>
     </div>
     <div class="ma"><button class="btn-g" onclick="closeOv('ovTx')">Cancelar</button><button class="btn-p" onclick="saveTx()">Guardar</button></div>
@@ -609,8 +609,21 @@ function setTxType(t){
   var be=document.getElementById('btnExp');
   bi.className=t==='income'?'ai':'';
   be.className=t==='expense'?'ae':'';
-  var cats=t==='income'?ICATS:ECATS;
-  document.getElementById('txCat').innerHTML=cats.map(function(c){return '<option>'+c+'</option>';}).join('');
+  var sel=document.getElementById('txCat');
+  var lbl=document.getElementById('txCatLbl');
+  if(t==='income'){
+    lbl.textContent='PLATAFORMA';
+    if(!platforms.length){
+      sel.innerHTML='<option value="">Agrega una plataforma primero</option>';
+    } else {
+      sel.innerHTML=platforms.map(function(p){
+        return '<option value="'+p.name+'">'+p.name+' — '+fmtD(p.bal)+'</option>';
+      }).join('');
+    }
+  } else {
+    lbl.textContent='CATEGORIA';
+    sel.innerHTML=ECATS.map(function(c){return '<option>'+c+'</option>';}).join('');
+  }
 }
 
 function openTx(id){
@@ -638,6 +651,11 @@ function openTx(id){
 
 function delTx(id){
   if(!confirm('Eliminar transaccion?'))return;
+  var t=txs.filter(function(x){return x.id===id;})[0];
+  if(t && t.type==='income'){
+    var pt=platforms.filter(function(p){return p.name===t.cat;})[0];
+    if(pt){pt.bal=Math.round((pt.bal-t.amt)*100)/100;}
+  }
   txs=txs.filter(function(t){return t.id!==id;});
   persist();renderCf();
 }
@@ -649,6 +667,23 @@ function saveTx(){
   var date=document.getElementById('txDate').value;
   var cat=document.getElementById('txCat').value;
   var note=document.getElementById('txNote').value.trim();
+  if(txType==='income' && (!platforms.length || !cat)){
+    alert('Selecciona una plataforma para registrar el ingreso.');
+    return;
+  }
+  // Reverse previous income credit if editing
+  if(txEdit){
+    var old=txs.filter(function(x){return x.id===txEdit;})[0];
+    if(old && old.type==='income'){
+      var oldPt=platforms.filter(function(p){return p.name===old.cat;})[0];
+      if(oldPt){oldPt.bal=Math.round((oldPt.bal-old.amt)*100)/100;}
+    }
+  }
+  // Apply new income credit
+  if(txType==='income'){
+    var newPt=platforms.filter(function(p){return p.name===cat;})[0];
+    if(newPt){newPt.bal=Math.round((newPt.bal+amt)*100)/100;}
+  }
   if(txEdit){
     var t=txs.filter(function(x){return x.id===txEdit;})[0];
     t.type=txType;t.name=name;t.amt=amt;t.date=date;t.cat=cat;t.note=note;
