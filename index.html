@@ -169,6 +169,10 @@ tbody tr:hover{background:var(--surf2);}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
       <span>Platforms</span>
     </div>
+    <div class="nav-item" id="n-workers" onclick="nav('workers')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span>Workers</span>
+    </div>
     <div class="nav-item" id="n-bills" onclick="nav('bills')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span>Bills</span>
@@ -218,6 +222,13 @@ tbody tr:hover{background:var(--surf2);}
       <button class="btn-p" onclick="openPt(0)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add platform</button>
     </div>
     <div class="pgrid" id="ptGrid"></div>
+  </div>
+  <div id="pg-workers" class="page">
+    <div class="topbar"><div><div class="pg-title">Workers</div><div class="pg-sub">Monthly salaries and advances</div></div>
+      <button class="btn-p" onclick="openWk(0)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add worker</button>
+    </div>
+    <div class="sg" id="wk-sg"></div>
+    <div class="pgrid" id="wkGrid"></div>
   </div>
   <div id="pg-bills" class="page">
     <div class="topbar"><div><div class="pg-title">Bills</div><div class="pg-sub">Track recurring expenses</div></div>
@@ -280,6 +291,56 @@ tbody tr:hover{background:var(--surf2);}
   </div>
 </div>
 
+<!-- WORKER MODAL -->
+<div class="ov" id="ovWk">
+  <div class="modal">
+    <div class="mt" id="mtWk">Add worker</div>
+    <div class="fg"><label class="fl">NAME</label><input class="fi" id="wkName" placeholder="Juan Perez"/></div>
+    <div class="fg"><label class="fl">ROLE</label><input class="fi" id="wkRole" placeholder="Developer, Sales, ..."/></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">MONTHLY ($)</label><input class="fi" id="wkMonthly" type="number" min="0" placeholder="2000"/></div>
+      <div class="fg"><label class="fl">PAY DAY (1-31)</label><input class="fi" id="wkPayDay" type="number" min="1" max="31" placeholder="30"/></div>
+    </div>
+    <div class="ma"><button class="btn-g" onclick="closeOv('ovWk')">Cancel</button><button class="btn-p" onclick="saveWk()">Save</button></div>
+  </div>
+</div>
+
+<!-- ADVANCE MODAL -->
+<div class="ov" id="ovAdv">
+  <div class="modal">
+    <div class="mt">Pay advance</div>
+    <div class="bal-row">
+      <div><div class="bal-lbl">WORKER</div><div class="bal-val" id="advWkName"></div></div>
+      <div style="text-align:right"><div class="bal-lbl">MONTHLY</div><div class="bal-val" id="advMonthly" style="font-family:'DM Mono',monospace"></div></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">ADVANCE ($)</label><input class="fi" id="advAmt" type="number" min="0" placeholder="0.00" oninput="updateAdvPreview()"/></div>
+      <div class="fg"><label class="fl">DEBIT FROM</label><select class="fi" id="advPlatform" onchange="updateAdvPreview()"></select></div>
+    </div>
+    <div class="fg"><label class="fl">NOTE (OPTIONAL)</label><input class="fi" id="advNote" placeholder="Reason for advance"/></div>
+    <div class="fg" style="margin-bottom:0"><div id="advPreview" style="font-size:12px;color:var(--mu)"></div></div>
+    <div class="ma"><button class="btn-g" onclick="closeOv('ovAdv')">Cancel</button><button class="btn-p" id="advConfirmBtn" onclick="confirmAdv()">Confirm advance</button></div>
+  </div>
+</div>
+
+<!-- SALARY MODAL -->
+<div class="ov" id="ovSal">
+  <div class="modal">
+    <div class="mt">Pay salary</div>
+    <div class="bal-row">
+      <div><div class="bal-lbl">WORKER</div><div class="bal-val" id="salWkName"></div></div>
+      <div style="text-align:right"><div class="bal-lbl">NET TO PAY</div><div class="bal-amt" id="salNet"></div></div>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;margin-bottom:18px;font-size:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--mu)">Monthly</span><span class="mono" id="salMonthly"></span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--mu)">Advances given</span><span class="mono warn" id="salAdvances"></span></div>
+    </div>
+    <div class="fg"><label class="fl">DEBIT FROM PLATFORM</label><select class="fi" id="salPlatform" onchange="updateSalPreview()"></select></div>
+    <div class="fg" style="margin-bottom:0"><div id="salPreview" style="font-size:12px;color:var(--mu)"></div></div>
+    <div class="ma"><button class="btn-g" onclick="closeOv('ovSal')">Cancel</button><button class="btn-p" id="salConfirmBtn" onclick="confirmSal()">Confirm payment</button></div>
+  </div>
+</div>
+
 <!-- BILL MODAL -->
 <div class="ov" id="ovBl">
   <div class="modal">
@@ -328,6 +389,10 @@ var bills=[
   {id:3,name:'Electric',cat:'Utilities',freq:'Monthly',amt:85,due:18},
   {id:4,name:'Spotify',cat:'Subscription',freq:'Monthly',amt:9.99,due:12}
 ];
+var workers=[
+  {id:1,name:'Juan Perez',role:'Developer',monthly:2000,payDay:30,advances:[],lastPaid:null},
+  {id:2,name:'Maria Lopez',role:'Designer',monthly:1500,payDay:15,advances:[],lastPaid:null}
+];
 var txs=[
   {id:1,type:'income',name:'Salario',cat:'Salario',amt:4500,date:ds(1,CM,CY),note:''},
   {id:2,type:'income',name:'Freelance web',cat:'Freelance',amt:800,date:ds(8,CM,CY),note:''},
@@ -339,7 +404,7 @@ var txs=[
   {id:8,type:'expense',name:'Restaurante',cat:'Alimentacion',amt:85,date:ds(14,CM,CY),note:''}
 ];
 
-var ptEdit=0, blEdit=0, txEdit=0, txType='income', txFilter='all', payBillId=0;
+var ptEdit=0, blEdit=0, txEdit=0, wkEdit=0, txType='income', txFilter='all', payBillId=0, advWorkerId=0, salWorkerId=0;
 var cLine=null,cDonut=null,cFlow=null,cExp=null;
 
 function persist(){
@@ -347,6 +412,7 @@ function persist(){
     localStorage.setItem('bd_platforms',JSON.stringify(platforms));
     localStorage.setItem('bd_bills',JSON.stringify(bills));
     localStorage.setItem('bd_txs',JSON.stringify(txs));
+    localStorage.setItem('bd_workers',JSON.stringify(workers));
   }catch(e){}
 }
 function loadPersisted(){
@@ -354,6 +420,7 @@ function loadPersisted(){
     var p=localStorage.getItem('bd_platforms');if(p)platforms=JSON.parse(p);
     var b=localStorage.getItem('bd_bills');if(b)bills=JSON.parse(b);
     var t=localStorage.getItem('bd_txs');if(t)txs=JSON.parse(t);
+    var w=localStorage.getItem('bd_workers');if(w)workers=JSON.parse(w);
   }catch(e){}
 }
 loadPersisted();
@@ -381,12 +448,13 @@ function nav(id){
   if(id==='cashflow')renderCf();
   if(id==='amounts')renderAm();
   if(id==='platforms')renderPt();
+  if(id==='workers')renderWk();
   if(id==='bills')renderBl();
 }
 
 function closeOv(id){document.getElementById(id).classList.remove('on');}
 document.querySelectorAll('.ov').forEach(function(o){o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('on');});});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){['ovTx','ovPt','ovBl','ovPay'].forEach(function(id){document.getElementById(id).classList.remove('on');});}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){['ovTx','ovPt','ovBl','ovPay','ovWk','ovAdv','ovSal'].forEach(function(id){document.getElementById(id).classList.remove('on');});}});
 
 // ---- OVERVIEW ----
 function renderOv(){
@@ -829,6 +897,257 @@ function saveBl(){
     bills.push({id:Date.now(),name:name,cat:cat,freq:freq,amt:amt,due:due});
   }
   persist();closeOv('ovBl');renderBl();
+}
+
+// ---- WORKERS ----
+function isWorkerPaidThisMonth(w){
+  if(!w||!w.lastPaid)return false;
+  var d=new Date(w.lastPaid+'T00:00:00');
+  return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+}
+function totalAdvances(w){
+  if(!w||!w.advances)return 0;
+  return w.advances.reduce(function(s,a){return s+(a.amount||0);},0);
+}
+function workerStatus(w){
+  if(isWorkerPaidThisMonth(w))return{lbl:'Paid this month',cls:'pos',dot:'#22c55e',card:'paid'};
+  var td=now.getDate(),diff=w.payDay-td;
+  if(diff<0)return{lbl:'Overdue',cls:'neg',dot:'#ef4444',card:'overdue'};
+  if(diff<=5)return{lbl:'Due in '+diff+'d',cls:'warn',dot:'#f59e0b',card:'soon'};
+  return{lbl:'Due in '+diff+'d',cls:'pos',dot:'#22c55e',card:''};
+}
+
+function renderWk(){
+  var monTot=workers.reduce(function(s,w){return s+(w.monthly||0);},0);
+  var paidCount=workers.filter(isWorkerPaidThisMonth).length;
+  var advTot=workers.reduce(function(s,w){return s+totalAdvances(w);},0);
+  document.getElementById('wk-sg').innerHTML=
+    '<div class="sc"><div class="sl">MONTHLY PAYROLL</div><div class="sv neg">'+fmtD(monTot)+'</div></div>'+
+    '<div class="sc"><div class="sl">WORKERS</div><div class="sv">'+workers.length+'</div></div>'+
+    '<div class="sc"><div class="sl">PAID THIS MONTH</div><div class="sv pos">'+paidCount+'/'+workers.length+'</div></div>'+
+    '<div class="sc"><div class="sl">PENDING ADVANCES</div><div class="sv warn">'+fmtD(advTot)+'</div></div>';
+  var grid=document.getElementById('wkGrid');
+  if(!workers.length){grid.innerHTML='<div class="empty"><div class="ei">O</div>No workers yet.</div>';return;}
+  var sorted=workers.slice().sort(function(a,b){
+    var pa=isWorkerPaidThisMonth(a)?1:0,pb=isWorkerPaidThisMonth(b)?1:0;
+    if(pa!==pb)return pa-pb;
+    return a.payDay-b.payDay;
+  });
+  grid.innerHTML=sorted.map(function(w){
+    var paid=isWorkerPaidThisMonth(w);
+    var adv=totalAdvances(w);
+    var net=Math.max(0,(w.monthly||0)-adv);
+    var st=workerStatus(w);
+    var initial=(w.name||'?').charAt(0).toUpperCase();
+    var advBlock = adv>0
+      ? '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--rs);padding:10px 12px;font-size:12px">'+
+          '<div style="display:flex;justify-content:space-between"><span style="color:var(--am)">Advances given</span><span class="mono" style="color:var(--am)">'+fmtD(adv)+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;margin-top:4px"><span style="color:var(--mu)">Net to pay</span><span class="mono">'+fmtD(net)+'</span></div>'+
+        '</div>'
+      : '';
+    var actionBtns = paid
+      ? '<button class="ibtn ipaid" disabled title="Paid this month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></button>'
+      : '<button class="ibtn" style="color:var(--am);border-color:rgba(245,158,11,0.3)" onclick="openAdv('+w.id+')" title="Pay advance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>'+
+        '<button class="ibtn ipay" onclick="openSal('+w.id+')" title="Pay salary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></button>';
+    return '<div class="pcard '+st.card+'">'+
+      '<div class="ptop">'+
+        '<div class="pico" style="background:rgba(59,130,246,0.12);color:var(--ac2);font-weight:500">'+initial+'</div>'+
+        '<div class="pinf"><div class="pnam">'+w.name+'</div><div class="ptyp">'+(w.role||'Worker')+'</div></div>'+
+        '<div class="pact">'+
+          '<button class="ibtn" onclick="openWk('+w.id+')" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'+
+          '<button class="ibtn" onclick="delWk('+w.id+')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'+
+        '</div></div>'+
+      '<div class="pmid">'+
+        '<div><div class="pbl">MONTHLY</div><div class="pbv">'+fmtD(w.monthly||0)+'</div></div>'+
+        '<div style="text-align:right"><div class="pbl">PAY DAY</div><div class="prt" style="font-size:16px;font-weight:500">Day '+w.payDay+'</div></div>'+
+      '</div>'+
+      advBlock+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
+        '<span style="display:flex;align-items:center;font-size:11px" class="'+st.cls+'"><span class="sdot" style="background:'+st.dot+'"></span>'+st.lbl+'</span>'+
+        '<div style="display:flex;gap:6px">'+actionBtns+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function openWk(id){
+  wkEdit=id;
+  if(id){
+    var w=workers.filter(function(x){return x.id===id;})[0];
+    document.getElementById('mtWk').textContent='Edit worker';
+    document.getElementById('wkName').value=w.name||'';
+    document.getElementById('wkRole').value=w.role||'';
+    document.getElementById('wkMonthly').value=w.monthly||'';
+    document.getElementById('wkPayDay').value=w.payDay||'';
+  } else {
+    document.getElementById('mtWk').textContent='Add worker';
+    document.getElementById('wkName').value='';
+    document.getElementById('wkRole').value='';
+    document.getElementById('wkMonthly').value='';
+    document.getElementById('wkPayDay').value='';
+  }
+  document.getElementById('ovWk').classList.add('on');
+  setTimeout(function(){document.getElementById('wkName').focus();},50);
+}
+
+function delWk(id){
+  if(!confirm('Remove worker?'))return;
+  workers=workers.filter(function(w){return w.id!==id;});
+  persist();renderWk();
+}
+
+function saveWk(){
+  var name=document.getElementById('wkName').value.trim();
+  if(!name){document.getElementById('wkName').focus();return;}
+  var role=document.getElementById('wkRole').value.trim();
+  var monthly=parseFloat(document.getElementById('wkMonthly').value)||0;
+  var payDay=Math.min(31,Math.max(1,parseInt(document.getElementById('wkPayDay').value)||1));
+  if(wkEdit){
+    var w=workers.filter(function(x){return x.id===wkEdit;})[0];
+    w.name=name;w.role=role;w.monthly=monthly;w.payDay=payDay;
+  } else {
+    workers.push({id:Date.now(),name:name,role:role,monthly:monthly,payDay:payDay,advances:[],lastPaid:null});
+  }
+  persist();closeOv('ovWk');renderWk();
+}
+
+// ADVANCE FLOW
+function openAdv(id){
+  advWorkerId=id;
+  var w=workers.filter(function(x){return x.id===id;})[0];
+  if(!w)return;
+  document.getElementById('advWkName').textContent=w.name;
+  document.getElementById('advMonthly').textContent=fmtD(w.monthly||0);
+  document.getElementById('advAmt').value='';
+  document.getElementById('advNote').value='';
+  var sel=document.getElementById('advPlatform');
+  if(!platforms.length){
+    sel.innerHTML='<option value="">No platforms — add one first</option>';
+  } else {
+    sel.innerHTML=platforms.map(function(p){
+      return '<option value="'+p.id+'">'+p.name+' — '+fmtD(p.bal)+'</option>';
+    }).join('');
+  }
+  updateAdvPreview();
+  document.getElementById('ovAdv').classList.add('on');
+  setTimeout(function(){document.getElementById('advAmt').focus();},50);
+}
+
+function updateAdvPreview(){
+  var w=workers.filter(function(x){return x.id===advWorkerId;})[0];
+  var prev=document.getElementById('advPreview');
+  var btn=document.getElementById('advConfirmBtn');
+  if(!w){prev.textContent='';return;}
+  var amt=parseFloat(document.getElementById('advAmt').value)||0;
+  var existingAdv=totalAdvances(w);
+  var totalAfter=existingAdv+amt;
+  var monthly=w.monthly||0;
+  var net=Math.max(0,monthly-totalAfter);
+  if(!platforms.length){prev.innerHTML='<span class="neg">Add a platform before paying advances.</span>';btn.disabled=true;btn.style.opacity='0.5';return;}
+  if(amt<=0){prev.innerHTML='Enter an advance amount.';btn.disabled=true;btn.style.opacity='0.5';return;}
+  var pid=parseInt(document.getElementById('advPlatform').value)||0;
+  var p=platforms.filter(function(x){return x.id===pid;})[0];
+  if(!p){prev.textContent='Select a platform.';return;}
+  var afterBal=p.bal-amt;
+  var ok=afterBal>=0;
+  var overpay=totalAfter>monthly;
+  prev.innerHTML=
+    'New '+p.name+' balance: <span class="'+(ok?'pos':'neg')+'">'+fmtD(afterBal)+'</span>'+(ok?'':' <span class="neg">(insufficient funds)</span>')+'<br>'+
+    'Total advances after this: <span class="warn">'+fmtD(totalAfter)+'</span> · Net salary remaining: <span>'+fmtD(net)+'</span>'+
+    (overpay?'<br><span class="neg">Note: total advances exceed monthly amount.</span>':'');
+  btn.disabled=false;btn.style.opacity='1';
+}
+
+function confirmAdv(){
+  var w=workers.filter(function(x){return x.id===advWorkerId;})[0];
+  if(!w)return;
+  if(!platforms.length){alert('Add a platform first.');return;}
+  var amt=parseFloat(document.getElementById('advAmt').value)||0;
+  if(amt<=0){alert('Enter an advance amount.');return;}
+  var pid=parseInt(document.getElementById('advPlatform').value)||0;
+  var p=platforms.filter(function(x){return x.id===pid;})[0];
+  if(!p){alert('Select a platform.');return;}
+  if(p.bal<amt){
+    if(!confirm('Insufficient funds in '+p.name+'. Pay anyway and let balance go negative?'))return;
+  }
+  p.bal=Math.round((p.bal-amt)*100)/100;
+  if(!w.advances)w.advances=[];
+  w.advances.push({
+    date:ds(now.getDate(),now.getMonth(),now.getFullYear()),
+    amount:amt,
+    platform:p.name,
+    note:document.getElementById('advNote').value.trim()
+  });
+  persist();
+  closeOv('ovAdv');
+  renderWk();
+}
+
+// SALARY FLOW
+function openSal(id){
+  salWorkerId=id;
+  var w=workers.filter(function(x){return x.id===id;})[0];
+  if(!w)return;
+  var adv=totalAdvances(w);
+  var net=Math.max(0,(w.monthly||0)-adv);
+  document.getElementById('salWkName').textContent=w.name;
+  document.getElementById('salMonthly').textContent=fmtD(w.monthly||0);
+  document.getElementById('salAdvances').textContent='-'+fmtD(adv);
+  document.getElementById('salNet').textContent=fmtD(net);
+  var sel=document.getElementById('salPlatform');
+  if(net===0){
+    sel.innerHTML='<option value="">No payment needed (covered by advances)</option>';
+  } else if(!platforms.length){
+    sel.innerHTML='<option value="">No platforms — add one first</option>';
+  } else {
+    sel.innerHTML=platforms.map(function(p){
+      return '<option value="'+p.id+'">'+p.name+' — '+fmtD(p.bal)+'</option>';
+    }).join('');
+  }
+  updateSalPreview();
+  document.getElementById('ovSal').classList.add('on');
+}
+
+function updateSalPreview(){
+  var w=workers.filter(function(x){return x.id===salWorkerId;})[0];
+  var prev=document.getElementById('salPreview');
+  var btn=document.getElementById('salConfirmBtn');
+  if(!w){prev.textContent='';return;}
+  var net=Math.max(0,(w.monthly||0)-totalAdvances(w));
+  if(net===0){
+    prev.innerHTML='<span class="pos">Salary already covered by advances. Confirming will close this cycle.</span>';
+    btn.disabled=false;btn.style.opacity='1';
+    return;
+  }
+  if(!platforms.length){prev.innerHTML='<span class="neg">Add a platform before paying.</span>';btn.disabled=true;btn.style.opacity='0.5';return;}
+  var pid=parseInt(document.getElementById('salPlatform').value)||0;
+  var p=platforms.filter(function(x){return x.id===pid;})[0];
+  if(!p){prev.textContent='Select a platform.';return;}
+  var after=p.bal-net;
+  var ok=after>=0;
+  prev.innerHTML='New '+p.name+' balance: <span class="'+(ok?'pos':'neg')+'">'+fmtD(after)+'</span>'+(ok?'':' <span class="neg">(insufficient funds)</span>');
+  btn.disabled=false;btn.style.opacity='1';
+}
+
+function confirmSal(){
+  var w=workers.filter(function(x){return x.id===salWorkerId;})[0];
+  if(!w)return;
+  var net=Math.max(0,(w.monthly||0)-totalAdvances(w));
+  if(net>0){
+    if(!platforms.length){alert('Add a platform first.');return;}
+    var pid=parseInt(document.getElementById('salPlatform').value)||0;
+    var p=platforms.filter(function(x){return x.id===pid;})[0];
+    if(!p){alert('Select a platform.');return;}
+    if(p.bal<net){
+      if(!confirm('Insufficient funds in '+p.name+'. Pay anyway and let balance go negative?'))return;
+    }
+    p.bal=Math.round((p.bal-net)*100)/100;
+  }
+  w.lastPaid=ds(now.getDate(),now.getMonth(),now.getFullYear());
+  w.advances=[];
+  persist();
+  closeOv('ovSal');
+  renderWk();
 }
 
 renderOv();
